@@ -1,0 +1,269 @@
+Ansible modules Website go through
+
+Task: handler/block/inline/pre-tasks/post-tasks
+
+Module:tags
+-----------
+Enable to run particular portiion of the task in a big playbook...tag can skip / 
+
+
+---
+
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+   - name: be sure ntp is installed
+     yum:
+       name: ntp
+       state: present
+     tags: ntp
+   - name: be sure ntp is configured
+     template:
+       src: ntp.conf.j2
+       dest: /etc/ntp.conf
+     notify:
+     - restart ntpd
+     tags: ntp
+   - name: be sure ntpd is running and enabled
+     service:
+       name: ntpd
+       state: started
+       enabled: yes
+     tags: ntp
+
+ansible-playbook -i slaves.txt tagg.yaml --syntax-check
+
+
+Ansible Vault
+==========================================================================
+Most of the times when sensitive or confidential data need to be 
+protected in the playbook, then it can be encrypted rather than 
+just keeping it in a text file which is readable by all. 
+Ansible Vault allows you to encrypt the playbook to protect the 
+confidential data.
+
+For Example, consider the following task where a confidential 
+job agreement is being copied.
+In such cases, you would need an Ansible Vault.
+
+   ansible-vault create first.yml
+   cat first.yml
+   ansible-playbook -i slaves.txt first.yml --ask-vault-pass
+   ansible-vault view first.yml
+   ansible-vault edit first.yml
+   ansible-vault rekey first.yml
+   clear
+   ansible-vault decrypt first.yml
+   cat first.yml
+  
+
+
+How to create one Encrypted yaml file and password protect on the same:
+==========================================================================
+Creating a new encrypted file  :
+================================
+To create new encrypted files with vault use the ansible-vault create command.
+
+$ ansible-vault create first.yml
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+   - name: Install git
+     yum:
+       name: git
+       state: present
+       update_cache: yes
+
+$ cat first.yml
+
+
+run a encrypted playbook:
+Use the option –ask-vault-pass with the ansible-playbook command.
+$ ansible-playbook -i slaves.txt first.yaml --ask-vault-pass
+
+
+
+How to Encrypt the Existing Ansible playbook
+=========================================================
+$ vi second.yml
+
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+   - name: Install mysql
+     yum:
+       name: mysql
+       state: present
+       update_cache: yes
+
+encrypt a playbook
+$ ansible-vault encrypt second.yml
+Password will again be asked for encryption.
+
+run a encrypted playbook:
+$ ansible-playbook -i slaves.txt second.yml --ask-vault-pass
+
+
+
+Viewing encrypted file
+=======================
+Use the command ansible-vault view to look at the actual contents of the file.
+
+$ ansible-vault view second.yml
+You will be asked for the password again to look at the contents of the file.
+
+
+
+Editing encrypted files
+=======================
+If you need to edit the file use the command ansible-vault edit
+
+$ ansible-vault edit second.yml
+Enter the password to edit the file.
+
+
+
+Changing password of the encrypted files
+=======================================================================
+Use the command ansible-vault rekey to change the password of the file.
+$ ansible-vault rekey second.yml
+
+run a playbook:
+$ ansible-playbook users.yml --ask-vault-pass
+
+
+
+Manually decrypting the encrypted files
+==========================================================================
+Use the command ansible-vault decrypt command.
+$ ansible-vault decrypt second.yml
+
+
+
+Tomcat installation using Ansible Playbook:
+=========================================================================
+vi tomcat.yaml
+
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  vars:
+  tasks:
+   - name: update all
+     yum:
+      name: '*'
+      state: present
+   - name: Install java
+     yum:
+      name: java-1.8.0-openjdk
+      state: present
+   - name: Download tomcat
+     get_url:
+      url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.58/bin/apache-tomcat-9.0.58.tar.gz
+      dest: /opt
+      mode: '0777'
+   - name: Unarchive the binaries
+     unarchive:
+      src: /opt/apache-tomcat-9.0.58.tar.gz
+      dest: /opt
+      remote_src: yes
+      mode: '0777'
+   - name: start tomcat
+     shell: nohup /usr/local/apache-tomcat-9.0.58/bin/startup.sh &
+     
+
+ansible-playbook -i slaves.txt tom.yaml --syntax-check
+ansible-playbook -i slaves.txt tom.yaml
+
+Connect to the slave machine and check on the tomcat installation.
+
+
+
+Ansible Roles and Galaxy:
+=========================================================================
+Roles - Automated Repository file for the reusable...
+Galaxy - Where we can keep the roles for the reusable - offline.
+
+
+sudo su -
+vi slaves.txt
+vi ansible.cfg
+
+mkdir playbooks
+cd playbooks
+vim install_httpd.yaml
+ls
+cd ..
+mkdir roles
+cd roles/
+ansible-galaxy init --help
+ansible-galaxy init httpd --offline
+ls -lart
+cd httpd/
+ls -lart
+tree
+sudo yum install tree -y
+tree
+cd tasks/
+vim main.yml
+cd ..
+cd files/
+vim index.html
+cd ../handlers/
+ls
+vim main.yml
+cat ../tasks/main.yml
+cat main.yml
+
+---
+- name: Installing httpd
+  hosts: localhost
+  become: true
+  roles:
+    - httpd
+---
+# tasks file for httpd
+- name: Installing httpd
+  yum:
+    name: httpd
+    state: latest
+  notify: restart httpd
+- name: copying files
+  copy:
+    src: index.html
+    dest: "{{ dest }}/index.html"
+    mode: 0766
+  notify: restart httpd
+
+
+----------------------------
+<html>
+        <body bgcolor="yellow">
+                <h1>Welcome to Greenstechnology</h1>
+        </body>
+</html>
+
+------------------------------
+
+
+How to install ansible through yum package and connect the slave:
+==========================================================================
+ec2-user
+sudo amazon-linux-extras install ansible2
+ansible --version
+cd /etc/ansible
+ls
+vi ansible.cfg
+sudo vi /etc/ansible/hosts         // Insert the Slaves private ips
+sudo vi /etc/ansible/ansible.cfg   // Cfg file has to be amended 
+Host_Key_Checking=False
+ansible all -i hosts -m ping
+
+
+Linux to Ubuntu connect through SSH
+
+Repeated Interview Questions and Answers:
+==========================================================================
