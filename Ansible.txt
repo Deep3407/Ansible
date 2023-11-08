@@ -1,0 +1,147 @@
+Ansible Session - 2
+==========================================================================
+Modules:
+	Manage services
+	copy files:
+
+/home/ec2-user
+create index.html
+
+ansible-playbook -i slaves.txt first.yml --syntax-check
+ansible-playbook -i slaves.txt first.yml
+
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+  - name: Install the latest version of Apache
+    yum:
+      name: httpd
+      state: latest
+  - name: Start service httpd, if not started
+    service:
+      name: httpd
+      state: started
+  - name: Copy file with owner and permissions
+    copy:
+      src: /home/ec2-user/index.html
+      dest: /var/www/html/index.html
+      mode: '777'
+
+
+ansible-playbook -i slaves.txt first.yml
+execution on progress...
+
+
+Verify: 
+Login with Slave system and check the availability of the index.html.
+
+
+
+
+loop:
+===========================================================================
+ansible-playbook -i slaves.txt second.yml --syntax-check
+ansible-playbook -i slaves.txt second.yml
+
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+  - name: installing the latest version of the packages
+    yum:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - php
+      - mysql
+      - unzip
+      - http_present
+
+
+
+Explain about Idempotent:
+==========================================================================
+Ansible is an idempotent - if u run the yaml script repeatedly also the same 
+result will be reflect in the slaves...
+
+
+
+
+git installation:
+==========================================================================
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+   - name: Install git
+     yum:
+       name: git
+       state: present
+       update_cache: yes
+
+ansible-playbook -i slaves.txt git.yml
+yum update
+
+
+
+
+jenkins installation using playbook:
+==========================================================================
+ansible all -i slaves.txt -a "sudo amazon-linux-extras install epel" -b
+jenkins.yml
+ansible-playbook -i slaves.txt jenkins.yml --syntax-check
+
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+      - name: Installing Jenkins on greens machine
+        yum_repository:
+            name: jenkins
+            description: Installing jenkins using repo
+            baseurl: http://pkg.jenkins.io/redhat
+            gpgkey: http://pkg.jenkins.io/redhat/jenkins.io.key
+
+      - name: Install Java and Jenkins
+        yum:
+          name: "{{ item }}"
+          state: present
+        loop:
+          - java
+          - jenkins
+
+      - name: Start Jenkins
+        service:
+          name: jenkins
+          state: started
+
+
+mysql installation using ansible playbook:
+-------------------------------------------------------------------------
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+   - name: Install mysql
+     yum:
+       name: mysql
+       state: present
+       update_cache: yes
+
+ansible-playbook -i slaves.txt mysql.yaml --syntax-check	
+ansible-playbook -i slaves.txt mysql.yaml
+
+
+
+
+Task:
+1. sample.war - apache deployment
+2. http_present - keep as a first package in loop.
+3. how to install the particular version of any software .. esp..git, apache
+4. dev, sit, uat, pre-prod, prod, dr - java / docker
+
+
+
+
+
