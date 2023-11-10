@@ -1,0 +1,30 @@
+- hosts: jenkins
+  remote_user: ec2-user
+  became: yes
+  task:
+  - name: update the enviroment
+    yum:
+     name: "*"
+     state: latest
+  - name: Installing Jenkins on Deepaks machine
+    yum_repository:
+     name: jenkins
+     description: Installing jenkins using repo
+     baseurl: http://pkg.jenkins.io/redhat
+     gpgkey: http://pkg.jenkins.io/redhat/jenkins.io.key
+  - name: update the enviroment
+    yum:
+     name: "*"
+     state: latest
+  - name: installing java
+    shell: sudo amazon-linux-extras install java-openjdk11 -y
+  - name: installing jenkins
+    yum:
+     name: jenkins
+     state: latest
+  - name: starting jenkins
+    systemmd:
+     enabled: yes
+     state: started
+     name: jenkins    
+
