@@ -1,0 +1,464 @@
+Ansible tool oru server install - master server -- oru playbook - yaml file 
+
+tagetmachine -ip , excution let We see about the ansible, it is a devops tool , open source tool 
+
+which is comes under configure and automation tool.
+
+TO reduse the manual intrrupt , and IT information automated(end to end) through this CMS (Configuation management system).
+
+why it is Need ?
+* to avoid the runtime exception 
+* to avoid the system outages.
+
+key points to know ;
+1 mechanism master and slave concept , PUSH BASED MECHANISM 
+2 master ( controle node ) , SLAVE ( MANAGE node )
+3 since we have one master and n number of slaves 
+4 using pagent we creating a ppk repostory to allow all the ppk files in same repostory
+5 pagent is like repostory tool which stores ppk file in this . it can stores 25 ppk file in it .
+6 In Ansibe we have limitation 
+  * it is a single master dependency 
+  * ansible cant work in window server .
+7 Ansible knows only Python so we need to add python package in master and slaves .
+8 it is agentless architecture 
+  * In master - we install Ansible and slave private Ip
+  * In slave - no  need to Install Ansible only Python package .
+
+Note  ( it is a single master dependency tool but more than 50 percent companies using this tool )
+       Becauce 
+         * it is easy to learn and deliver 
+         * it is using YAML - ( yet another markup language)
+         * we can work on premises and cloud premisies also 
+         * basic Unix comands also work .
+
+Now Let  see the set up for Ansible in our servers.
+ 
+  we can connect the Ansible in 3 ways .
+* pip ( python installation package ) 
+* yum -- linux os 
+* apt -- ubuntu os
+ 
+
+host inventry 
+ansible confg file 
+
+on first class we see how to insatll Ansible using pip .
+note ( Ansible default file path /etc/ansible)
+
+step 1 : create 5 ec2 server in aws 
+
+step 2 : create a bootstrap for all machine to install python .
+       command (#! /bin/bash
+                yum install python-pip -y )
+
+step 3 : now lets transfer the ansible.ppk to the pagent app
+
+step 4 : now connect the master server using puty and put the ppk file ( allow agent )
+
+step 5 : then update the server using 
+        command- sudo yum update 
+
+step 6 :And the install ansible using pip 
+        command - sudo pip install ansible
+ 
+step 7 :And then you install the ansible .
+
+note ( after for ansible we know the default path /etc/ansible , try to check whether we have the ansible or not )
+
+step 8 : And then change directry  to home/ec2-user 
+note ( only this home/ec2-user path  having full read write and execute authority ,so inthis file path create a vi host inventry name )
+
+step 9 : And then place the private ip num inthe vi host name and save exit
+
+step 10: And configure the  anbile using wget command 
+       command ( wget https://raw.githubusercontent.com/ansible/ansible/stable-2.11/examples/ansible.cfg
+step 11: And then list out it you get the config file for ansible 
+note ( go vi ansible config and search host  name checking change into false )
+
+IMPORTANT ANSIBLE COMPONENTS
+* adhoc command-- single task execution
+* play book ----- multi task execution
+* vault    ------- it is like encrytion type which we can encrypt our secured yaml file 
+* roles   --------it is like a offline template..
+
+step 12 : And now we checking the slave are connected with our master or not By  (AHDOC COMMAND)
+        AHDOC COMMAND :  ansible all -i slaves.txt -m ping
+
+step 13 : To find the date for the slaves 
+        AHDOC COMMAND : ansible all -i slaves.txt -a "date"
+
+step 14 : To find the OS for slaves using 
+       AHDOC COMMAND : slaves.txt -a "uname -a"
+
+note ( now i am going to insatll GIT in my master server  and then check the refelection on slave server )
+
+step 15 : to install git in master server 
+       AHDOC COMAND - 	
+
+note ( at first without you put we cant execute it because we configring some task using "yum" so that we need to give some root privilage 
+       to get that root privilage  use ( -b),)
+
+step 16 : And then grouping the slaves by using some name 
+
+         note ( go to host inventery name give a name in [any name] to slaves id and save it ) 
+
+step 17 : And create this command 
+        AHDOC COMMAND - ansible all -i slaves.txt -a "yum install git -y" -b
+
+step 18 : let see some how install apache  using adhoc commands
+   
+   at first we need to know about linux commands        
+     yum install  httpd                                  apart from that install- present
+     service start httpd                                                  uninstall-absent
+     index.html --- /var/www/html                                         start  - started
+then see how to write in AHDOC command                                    stop- stopped 
+     
+command - ansible webserver -i slaves.txt -m yum -a "name=httpd state=present" -b
+          ansible webserver -i slaves.txt -m service -a "name=httpd state=started" -b
+          ansible webserver -i slaves.txt -m copy -a "src=/home/ec2-user/index.html dest=/var/www/html/index.html" -b
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+SECOND DAY ACTIVITY
+
+today we see About the  modules in ansible .
+
+MODULES -- A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, 
+an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance.
+  
+well we have more than 750 of them ,
+
+we have two types of modules 1 core module 
+ 			     2 custmom module 
+
+let see how to use these modules using playbook for multitasking.
+
+step 1 : already we created a 3 server for this ansible .
+
+step 2 : In first class we installed apache web using ADHOC comand but in session we playbook . copy this yamel file and save it as (first.yaml)
+        note ( and create a index.html and place the content in it )
+
+ - hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+  - name: install the latest version of Apache
+    yum:
+      name: httpd
+      state: present
+  - name: Start service httpd, if not started
+    service:
+      name: httpd
+      state: started   
+  - name: Copy file 
+    copy:
+      src: /home/ec2-user/index.html 
+      dest: /var/www/html/index.html
+
+before going to this topic just slightly explain about the color 
+step 3 : now we going to see the loop module lets we create a yaml file for loop
+  note ( once you execute some function its showes diffrent colors like gree- which means ok  
+                                                                        yellow - chnaged 
+                                                                        red- failed
+at first we creating yaml file and executing some app . it will startingly shows yellow color which means installing that app.
+
+once it finished again we executing the same code it will shows green color - ok which means it will skip that function and execute another one 
+
+that is called as IDEMPOTENT - ansible is IDEMPOTENT . 
+
+"{{ item }}"-------> jinja format..   
+
+ - hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+  - name: installing the packages 
+    yum:
+      name: "{{ item }}"     
+      state: present
+    loop:
+      - php  
+      - mysql
+      - unzip
+      - http_present
+       
+step 14 : now we are going install jenkins by using yaml file .
+
+- hosts: jenkins
+  remote_user: ec2-user
+  become: yes
+  tasks:
+  - name: Add repository
+    yum_repository:
+      name: jenkins
+      description: installing jenkins
+      baseurl: http://pkg.jenkins.io/redhat-stable
+      gpgkey: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+  - name: installing the java,jenkins 
+    yum:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - java-1.8.0-openjdk-devel
+      - jenkins
+  - name: Start service  jenkins, if not started
+    service:
+      name: jenkins
+      state: started
+
+at first time if run this command it will not work so because amazon has updated his AMI so that jenkins not installed 
+
+so to rectify that we using command (ansible all -i slaves.txt -a "amazon-linux-extras install epel -y" -b)
+
+then again execute the code it will work.
+
+step 15 : now we going to change the port  number for jenkins
+
+at first we go to slave machine ssh command --  ssh ec2-user@54.251.216.16
+
+step 16 : and then --- cd /etc/sysconfig/
+          ls -lrt 
+          vi jenkins ---then you see the jenkins port number 8080 
+step 17 : exit 
+
+step 18 : how to that port number by using Ansible modules 
+
+- hosts: jenkins
+  remote_user: ec2-user
+  become: yes
+  vars:
+    port: 9090
+  tasks:
+  - name: Add repository
+    yum_repository:
+      name: jenkins
+      description: installing jenkins
+      baseurl: http://pkg.jenkins.io/redhat-stable
+      gpgkey: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+  - name: installing the java,jenkins 
+    yum:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - java-1.8.0-openjdk-devel
+      - jenkins
+  - name: changing jenkins port no 
+    lineinfile:
+      path: /etc/sysconfig/jenkins
+      regexp: '^JENKINS_PORT='
+      line: JENKINS_PORT={{port}}
+    notify: restart jenkins
+  - name: Start service  jenkins, if not started
+    service:
+      name: jenkins
+      state: started
+  handlers:    
+  - name: restart jenkins
+    service:
+      name: jenkins
+      state: restarted
+
+
+step 18 : if you change the port no command - ansible-playbook -i slaves.txt tomcat.yaml -e ports=8000
+ note ( -e it is a enviornment variable we change our port by puting this before that we declaring vars : )
+
+------------------------------------------------------------------------------------------------------------------------------------
+THIRD day Activity---
+
+TOPICS-- Vault
+        
+step1: how to create a vault 
+ 
+open visual studio -----
+
+step1: creeat  vi config.yaml--- and paste use name and pass
+note : (create yaml file in visual studio name it as myconfig.yaml
+         uname: Admin
+         pass: Admin123
+
+step2: create vi vault.yaml and paste this command
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  vars_files: 
+    myconfig.yaml
+  tasks:
+  - name: Print the gateway for each host when defined
+    debug:
+      msg: My username is {{uname}} and my password {{pass}}
+
+DEBUG is another module which is echo command
+
+var_files ---means adding a file inthat playbooks  --- that config file contain usr name and pass .
+
+step3: go Master machine and create vi files and paste that scripts
+
+step4: and run the this 
+     command---- ansible-playbook -i slaves.txt vault.yaml
+
+step5: LET SEE HOW ENCRYPT OUR FILES USING ansible vault
+     command --- ansible-vault encrypt myconfig.yaml
+
+step6: then again run this 
+    command ---  ansible-playbook -i slaves.txt vault.yaml
+Ansible cant execute that command that because we encrypted our myconnfig.yaml . even Ansible also cant run that command 
+
+step7: so that we need to  ask password
+    command ----  ansible-playbook -i slaves.txt vault.yaml --ask-vault-password 	
+and give the password open it up 
+
+step8: for decrypt that password to see your myconfig.yaml
+    command--  ansible-vault decrypt myconfig.yaml
+
+
+note ( for change the vault password - ansible-vault rekey <file name> ).
+
+----------------------------------------------------
+ROLES --- is nothing but REUSEABILITY 
+     
+   for example im writing a jenkins playbook, my team worker also want write same code , at that i can use Roles option to take code .
+
+step1: create a role using 
+    command--- ansible-galaxy init apache
+
+once it initiate give the comand ls -lrt
+
+to view properly install a  package  give command ---  sudo yum install tree -y
+
+step9: run the command --- tree apache/
+
+note ( take frist.yaml file --- paste the tasks in appropriate taks file and paste index.html file in files of apache )
+note vi apache/tasks/main.yml
+
+ step10: go to studio code create a file (roles.yaml) and paste this yaml file   
+
+  - hosts: all
+  remote_user: ec2-user
+  become: yes
+  roles:
+    - apache
+
+step11: Come to master create a vi roles.yaml and paste it 
+
+step12: run this comand ansible-playbook -i slaves.txt roles.yaml
+
+step13: Let  we dicuss about how install Apche tomcat installation.
+
+prerequesities
+1 yum update
+2 insatll java
+3 tomcat download
+4 unzip tomcat
+5 shell start
+
+file path in slave   /bin/startup.sh
+           /bin/startup.sh
+
+
+once you install tomcat now we need to change port number 
+
+step 1 -- go slave machine and sudo su - change path cd /opt/apach../conf 
+
+step 2 -- in that conf --- go server.xml--- change the port into jinja format like {{ tomcat_port }}
+
+step 3 -- come to master machine connect the slave using ssh ec2-user@<slaveip> 
+
+step 4 --- same go to conf path 
+
+step 5 --- in conf path
+    command -- cd /tmp 
+    command in tmp#: cp /opt/apache-tomcat-8.5.81/conf/server.xml .
+ 
+step 6 -- once the file cp  list the file using comand-- ll
+  and check whether it is in root permission change the permission to ec2-user
+
+using command-- chown ec2-user:ec2-user server.xml
+
+step 7 -- then come to master and execute this command  
+comand -- scp ec2-user@<slave ip>:/tmp/server.xml .
+
+step 8 -- change that server.xml into server.xml.j2 format 
+command -- cp server.xml server.xml.j2
+
+step 9 -- and then execute the playbook 
+
+
+
+
+
+
+
+
+------------------------------------------------------
+
+6 port no change ---- template
+note ( use ssh comand to open slave machine on master )
+
+file path inslave   cd /opt/apache-tomcat-9.0.64/conf/server.xml
+
+were you can see the port number . now we going to change the port number from master 
+
+copy the server.xml file from slave to master ---by using scp command
+
+scp ec2-user@172.31.47.111:/opt/apache-tomcat-9.0.73/conf/server.xml /home/ec2-user/
+
+change the server.xml file into jinja format .
+
+save the server.xml into server.xml.j2 by using command --- mv server.xml server.xml.j2
+
+(hints)
+-e tomcat_port=7070 
+ignore_errors: yes
+
+------------------------------------------------------
+Ansible Tags
+
+Once you have added a tags to your task,includes,plays,roles.
+you can selectively execute or skip tasks based on their tags when you run ansible-playbook,
+Ansible runs or skips all tasks with tags that match the tags you pass at the command lines.
+
+- hosts: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+   - name: ntp is installed 
+     yum:
+       name: ntp
+       state: present
+     tags: ntp
+   -  name: ntp is configure
+      template:
+        src: ntp.conf.j2
+        dest: /etc/ntp.conf
+      notify:
+      - restart ntpd
+      tags: ntp
+   - name: ntpd running or not
+     service:
+        name: ntpd
+        state: started
+        enabled: yes
+     tags: ntp
+
+commad -- ansible-playbook -i slaves.txt tag.yaml --syntax-check
+
+---------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+  
